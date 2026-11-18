@@ -1,0 +1,14 @@
+// CHI CHEN DOAN NAY vao ben trong match /databases/{database}/documents
+// SAU ham familyMember() va TRUOC match /{document=**}.
+// KHONG xoa Rules cu hay danh sach email da cap quyen.
+match /publicRooms/{roomId} {
+  allow read: if true;
+  allow create, update: if familyMember()
+    && request.resource.data.keys().hasOnly([
+      'name','distance','travel','bus','busStop','rent',
+      'housing','security','hotWater','privateWC',
+      'electric','water','wifi','otherCost','electricEstimate',
+      'lease','groupOverride','status','updatedAt'
+    ]);
+  allow delete: if familyMember();
+}
