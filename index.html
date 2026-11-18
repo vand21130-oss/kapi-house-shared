@@ -64,7 +64,7 @@ const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),r
 let rooms=[],selected=new Set(),loggedIn=null,ready=false,unsub=null,baseRooms=new Map(),saveQueue=Promise.resolve(),pending=0,failed=false,viewerMode=true;
 const deepCopy=v=>JSON.parse(JSON.stringify(v));
 function setCloud(message,kind=''){$('cloudStatus').textContent=message;$('cloudBar').className='cloud-bar '+kind;}
-function errText(err){const m=err?.message||String(err);if(err?.code==='permission-denied')return 'Tài khoản này chưa có quyền Firestore. Hãy kiểm tra 2 email trong Rules rồi Publish.';if(err?.code==='auth/unauthorized-domain')return 'Tên miền website chưa được phép đăng nhập. Thêm domain tại Authentication → Settings → Authorized domains.';if(err?.code==='auth/popup-blocked')return 'Trình duyệt chặn cửa sổ đăng nhập. Hãy cho phép pop-up.';return m;}
+function errText(err){const m=err?.message||String(err);if(err?.code==='permission-denied')return 'Firebase đang từ chối quyền lưu vào rooms. Kiểm tra quyền ghi của tài khoản trong Firestore Rules.';if(err?.code==='auth/unauthorized-domain')return 'Tên miền website chưa được phép đăng nhập. Thêm domain tại Authentication → Settings → Authorized domains.';if(err?.code==='auth/popup-blocked')return 'Trình duyệt chặn cửa sổ đăng nhập. Hãy cho phép pop-up.';return m;}
 function showGate(msg){ready=false;$('appArea').hidden=true;$('authGate').hidden=false;$('authGate').textContent=msg;}
 function showApp(){ready=true;$('appArea').hidden=false;$('authGate').hidden=true;render();applyMode();}
 function publicSummary(r){return {name:'Phòng '+String(r.id||'').slice(-5).toUpperCase(),distance:r.distance||'',travel:r.travel||'',bus:r.bus||'',busStop:r.busStop||'',rent:r.rent||'',housing:r.housing||'other',security:r.security||'unknown',hotWater:!!r.hotWater,privateWC:!!r.privateWC,electric:r.electric||'',water:r.water||'',wifi:r.wifi||'',otherCost:r.otherCost||'',electricEstimate:r.electricEstimate||'',lease:r.lease||'unknown',groupOverride:r.groupOverride||'auto',status:r.status==='unavailable'?'unavailable':'new',updatedAt:r.updatedAt||''};}
@@ -86,8 +86,8 @@ function persist(){
  pending++;setCloud('⏳ Đang lưu lên Firestore...','saving');
  saveQueue=saveQueue.catch(()=>{}).then(async()=>{
    const desired=new Map(requested.map(r=>[r.id,r]));const batch=writeBatch(db);let changed=0;
-   for(const [id,r] of desired){const previous=baseRooms.get(id);if(!previous||JSON.stringify(previous)!==JSON.stringify(r)){batch.set(doc(db,'rooms',id),r);batch.set(doc(db,'publicRooms',id),publicSummary(r));changed++;}}
-   for(const id of baseRooms.keys())if(!desired.has(id)){batch.delete(doc(db,'rooms',id));batch.delete(doc(db,'publicRooms',id));changed++;}
+   for(const [id,r] of desired){const previous=baseRooms.get(id);if(!previous||JSON.stringify(previous)!==JSON.stringify(r)){batch.set(doc(db,'rooms',id),r);changed++;}}
+   for(const id of baseRooms.keys())if(!desired.has(id)){batch.delete(doc(db,'rooms',id));changed++;}
    if(changed){await batch.commit();baseRooms=desired;}
    pending--;if(pending===0){failed=false;setCloud('✅ Đã lưu dữ liệu','good');$('retryBtn').hidden=true;}
  }).catch(error=>{
