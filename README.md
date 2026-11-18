@@ -1,25 +1,32 @@
-# Kapi House Shared 🏠🐦
+# Kapi House Shared 🐦🏠
 
-Trang quản lý phòng trọ Bách Khoa dành cho hai chị em, lưu chung trên **Firebase Firestore** và đăng nhập bằng **Google Authentication**.
+Website: Kapi Shared dùng **Firebase Firestore** để lưu hồ sơ phòng và **GitHub Pages** để hiển thị giao diện.
 
-## Trạng thái
-Đây là mã giao diện tĩnh. Cần bật **GitHub Pages** và thêm domain GitHub Pages vào **Firebase Authentication → Settings → Authorized domains** trước khi đăng nhập trên web.
+## Quyền truy cập
+- **Khách không đăng nhập:** đọc collection `publicRooms` chỉ chứa dữ liệu tổng quan (không có địa chỉ chi tiết, SĐT, ghi chú, nguồn liên hệ, đường link hoặc phản hồi).
+- **Tài khoản có quyền:** đọc/ghi collection `rooms`; khi lưu ứng dụng đồng thời ghi một bản dữ liệu được rút gọn vào `publicRooms`.
+- Dữ liệu trước khi cập nhật bản web có thể chưa có bản sao công khai: cần mở một phòng bằng tài khoản quản trị và lưu lại để hiện trong chế độ khách.
+- Bất kỳ ai cũng có thể nhìn thấy dữ liệu công khai; đừng nhập thông tin nhạy cảm vào các trường hiển thị công khai.
 
-## Bật GitHub Pages
-1. GitHub repository → **Settings → Pages**.
-2. Ở **Build and deployment**, chọn **Deploy from a branch**.
-3. Branch: **main**, folder: **/(root)** → **Save**.
-4. Website dự kiến: https://vand21130-oss.github.io/kapi-house-shared/
+## 1. Bật GitHub Pages
+Repository → Settings → Pages → Build and deployment → **Deploy from a branch**, `main`, `/(root)` → Save.
 
-## Bảo vệ dữ liệu
-Mã nguồn repo là public. Thông tin cấu hình Firebase phía client (apiKey, projectId, v.v.) không phải khóa quản trị. **Không đưa dữ liệu phòng trọ, mật khẩu, token, khóa dịch vụ hoặc email riêng lên repository**.
-Cần giữ **Firestore Security Rules** giới hạn hai tài khoản được phép truy cập. Google Login chỉ xác thực danh tính, không tự phân quyền.
+Trang dự kiến: https://vand21130-oss.github.io/kapi-house-shared/
 
-## Khi nào có thể dùng thật?
-Chỉ sau khi thử thành công: đăng nhập tài khoản được phép, thêm một phòng mẫu, tải lại vẫn thấy dữ liệu, sửa phòng và kiểm tra trên thiết bị thứ hai.
-Cần thêm email Google của chị vào Firestore Rules sau khi được chị cung cấp.
+## 2. Firebase Authentication
+Authentication → Settings → Authorized domains → thêm `vand21130-oss.github.io` để người quản trị đăng nhập Google trên domain GitHub Pages.
 
-## Lưu ý
-- Hiện chưa kiểm chứng Pages đã bật hay việc đăng nhập/lưu trên dự án Firebase thực tế.
-- Dữ liệu lưu trên Firestore, không phải trên GitHub.
-- Có nút xuất JSON dự phòng trong ứng dụng.
+## 3. Firestore Security Rules
+**KHÔNG thay thế toàn bộ Rules đang chạy bằng file ví dụ.**
+Giữ nguyên hàm `familyMember()`, rule `match /rooms/{roomId}` và rule chặn cuối cùng. Chỉ chèn đoạn `match /publicRooms/{roomId}` từ `PUBLIC_RULES_SNIPPET.txt` vào trước dòng `match /{document=**}`.
+
+Đoạn mới cho phép khách chỉ đọc dữ liệu công khai, còn chỉnh sửa vẫn yêu cầu tài khoản trong `familyMember()`. Chỉ tài khoản được cấp quyền mới được thêm phòng.
+
+## 4. Kiểm thử trước khi gửi link
+1. Mở website ở cửa sổ ẩn danh: phải thấy danh sách tổng quan, không yêu cầu Gmail.
+2. Đăng nhập Google bằng tài khoản quản trị: phải thấy dữ liệu đầy đủ và nút Thêm phòng.
+3. Thêm một phòng mẫu; kiểm tra sau khi tải lại.
+4. Mở lại ẩn danh: phải thấy bản tổng quan, tuyệt đối không thấy số điện thoại, địa chỉ chi tiết hoặc ghi chú.
+5. Nếu chưa đạt, không sử dụng để nhập phòng thật.
+
+Không cần Node.js hay Apps Script. GitHub Pages chỉ host mã nguồn web; Firebase giữ dữ liệu.
