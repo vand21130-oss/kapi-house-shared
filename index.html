@@ -69,16 +69,16 @@ function showGate(msg){ready=false;$('appArea').hidden=true;$('authGate').hidden
 function showApp(){ready=true;$('appArea').hidden=false;$('authGate').hidden=true;render();applyMode();}
 function publicSummary(r){return {name:'Phòng '+String(r.id||'').slice(-5).toUpperCase(),distance:r.distance||'',travel:r.travel||'',bus:r.bus||'',busStop:r.busStop||'',rent:r.rent||'',housing:r.housing||'other',security:r.security||'unknown',hotWater:!!r.hotWater,privateWC:!!r.privateWC,electric:r.electric||'',water:r.water||'',wifi:r.wifi||'',otherCost:r.otherCost||'',electricEstimate:r.electricEstimate||'',lease:r.lease||'unknown',groupOverride:r.groupOverride||'auto',status:r.status==='unavailable'?'unavailable':'new',updatedAt:r.updatedAt||''};}
 function applyMode(){document.querySelectorAll('#addBtn,#importBtn,#exportBtn,#csvBtn').forEach(el=>{el.hidden=viewerMode});document.querySelectorAll('th:nth-child(n+8),td:nth-child(n+8)').forEach(el=>el.hidden=viewerMode);document.querySelectorAll('[data-edit],[data-delete],[data-lease],[data-contact],[data-reply],[data-note]').forEach(el=>el.hidden=viewerMode);$('cloudUser').textContent=viewerMode?'Chế độ khách: chỉ xem thông tin tổng quan':(loggedIn?.email||'Đã đăng nhập');}
-function loadCloud(){
+function loadCloud(publicOnly=false){
  if(unsub){unsub();unsub=null;}
- viewerMode=!loggedIn;
+ viewerMode=publicOnly||!loggedIn;
  setCloud(viewerMode?'Đang tải danh sách công khai...':'Đang tải dữ liệu quản trị...');showGate('⏳ Đang tải danh sách...');
  unsub=onSnapshot(viewerMode?publicCol:roomsCol,snapshot=>{
    if(snapshot.metadata.hasPendingWrites || pending>0)return;
    rooms=snapshot.docs.map(d=>({...d.data(),id:d.id}));
    baseRooms=new Map(rooms.map(r=>[r.id,deepCopy(r)]));
    failed=false;showApp();applyMode();setCloud('✅ '+(viewerMode?'Xem công khai':'Đã đồng bộ')+' · '+rooms.length+' phòng','good');
- },error=>{failed=true;showGate('❌ Không thể tải danh sách: '+errText(error));setCloud('❌ '+errText(error),'error');$('retryBtn').hidden=false;});
+ },error=>{if(!viewerMode && error?.code==='permission-denied'){loadCloud(true);return;}failed=true;showGate('❌ Không thể tải danh sách: '+errText(error));setCloud('❌ '+errText(error),'error');$('retryBtn').hidden=false;});
 }
 function persist(){
  if(!loggedIn||!ready||viewerMode){setCloud('⚠️ Chưa kết nối. Không thể lưu thay đổi.','error');return Promise.reject(new Error('Chưa kết nối'));}
